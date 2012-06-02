@@ -10,7 +10,7 @@ $(function(){
   // ----------
 
   // Our basic **Todo** model has `content`, `order`, and `done` attributes.
-  var Todo = Backbone.Model.extend({
+  var Todo = Backbone.ReactiveModel.extend({
 
     // Default attributes for the todo.
     defaults: {
@@ -87,7 +87,7 @@ $(function(){
     tagName:  "li",
 
     // Cache the template function for a single item.
-    template: _.template($('#item-template').html()),
+    template: $('#item-template'),
 
     // The DOM events specific to an item.
     events: {
@@ -102,14 +102,14 @@ $(function(){
     // a one-to-one correspondence between a **Todo** and a **TodoView** in this
     // app, we set a direct reference on the model for convenience.
     initialize: function() {
+      $(this.el).html(this.template.clone());
+      $(this.el).anchor(this.model.JSON);
       _.bindAll(this, 'render', 'close', 'remove');
-      this.model.bind('change', this.render);
       this.model.bind('destroy', this.remove);
     },
 
     // Re-render the contents of the todo item.
     render: function() {
-      $(this.el).html(this.template(this.model.toJSON()));
       this.input = this.$('.todo-input');
       return this;
     },
@@ -121,14 +121,13 @@ $(function(){
 
     // Switch this view into `"editing"` mode, displaying the input field.
     edit: function() {
-      $(this.el).addClass("editing");
+      this.model.set({editing:true});
       this.input.focus();
     },
 
     // Close the `"editing"` mode, saving changes to the todo.
     close: function() {
-      this.model.save({content: this.input.val()});
-      $(this.el).removeClass("editing");
+      this.model.save({editing:false, content: this.input.val()});
     },
 
     // If you hit `enter`, we're through editing the item.
@@ -154,7 +153,7 @@ $(function(){
     el: $("#todoapp"),
 
     // Our template for the line of statistics at the bottom of the app.
-    statsTemplate: _.template($('#stats-template').html()),
+    statsTemplate: $('#stats-template'),
 
     // Delegated events for creating new items, and clearing completed ones.
     events: {
@@ -186,7 +185,7 @@ $(function(){
       var done = Todos.done().length;
       var remaining = Todos.remaining().length;
 
-      this.$('#todo-stats').html(this.statsTemplate({
+      this.$('#todo-stats').html(this.statsTemplate.clone().anchor({
         total:      Todos.length,
         done:       done,
         remaining:  remaining
@@ -199,7 +198,7 @@ $(function(){
     // appending its element to the `<ul>`.
     addOne: function(todo) {
       var view = new TodoView({model: todo});
-      this.$("#todo-list").append(view.render().el);
+      this.$("#todo-list").append(view.el);
     },
 
     // Add all items in the **Todos** collection at once.
